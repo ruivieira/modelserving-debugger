@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./logger
+      dockerfile: partial.Dockerfile
+      tags:
+        - "latest"
+    ports:
+      - "8080:8080"
+    environment:
+      SERVICE_ENDPOINT: http://modelserving-debugger:8080/ingest
+
+  modelserving-debugger:
+    build:
+      context: .
+      tags:
+        - "latest"
+    ports:
+      - "8081:8080"

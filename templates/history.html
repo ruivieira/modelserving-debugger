@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Payload History for Model</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        .logo {
+            max-width: 6rem;
+        }
+
+        .highlighted {
+            background-color: pink;
+        }
+
+
+        .content {
+            display: flex;
+        }
+
+        .scrollable {
+            width: 50%;
+            height: 90vh;
+            overflow-y: auto;
+        }
+
+        .fixed {
+            width: 50%;
+            height: 90vh;
+            overflow-y: scroll;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        D .header {
+            width: 100%;
+        }
+
+        .response,
+        .request {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        #left,
+        #right {
+            width: 50%;
+        }
+
+        #right>pre {
+            font-size: 1.1rem;
+        }
+
+        #left ul {
+            padding: 0;
+        }
+
+        #left li {
+            list-style-type: none;
+            cursor: pointer;
+            margin: 5px;
+            padding: 5px;
+        }
+
+        #left li:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <img class="logo" src="/images/logo.png">
+        <h1>Payload History for Model: {{.ModelId}}</h1>
+    </div>
+    <div class="content">
+        <div id="left" class="scrollable">
+            <ul>
+                {{range .Payloads}}
+                <li data-payload-id='{{.Payload.ID}}' data-payload-kind='{{.Payload.Kind}}'
+                    onclick="fetchPayloadJson('{{.Payload.ID}}', '{{.Payload.Kind}}', this)">
+                    {{if eq .Payload.Kind "request"}}
+                    <span class="request">[request]</span>
+                    {{else if eq .Payload.Kind "response"}}
+                    <span class="response">[response]</span>
+                    {{end}}
+                    {{.Timestamp}}
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        <div id="right" class="fixed">
+            <pre id="payloadDetails">Click a payload on the left to view its details here.</pre>
+        </div>
+    </div>
+    <script>
+        function fetchPayloadJson(payloadId, payloadKind) {
+
+            // Remove highlighted class from all items
+            document.querySelectorAll('#left li').forEach(function (item) {
+                item.classList.remove('highlighted');
+            });
+
+            // Highlight the clicked item
+            event.currentTarget.classList.add('highlighted');
+
+
+            fetch(`/payload-json/${payloadKind}/${payloadId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('payloadDetails').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    document.getElementById('payloadDetails').textContent = 'Error loading payload data.';
+                });
+        }
+    </script>
+</body>
+
+</html>

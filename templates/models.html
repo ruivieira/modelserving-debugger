@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Model List</title>
+    <style>
+        .logo {
+            max-width: 6rem;
+        }
+    </style>
+</head>
+
+<body>
+    <img class="logo" src="/images/logo.png">
+    <h1>Model List</h1>
+    <ul>
+        {{range $key, $_ := .}}
+        <li><a href="/models/{{$key}}">{{$key}}</a></li>
+        {{end}}
+    </ul>
+</body>
+
+</html>
