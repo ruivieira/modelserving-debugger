@@ -13,6 +13,6 @@ export interface PayloadHistory {
 
 export interface PayloadWithId {
     id: string;  // Unique identifier for the payload
-    name: string; // Human-readable name for the payload
-    kind: 'request' | 'response';
+    payload: Payload
+    Timestamp: string
 }
