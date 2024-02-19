@@ -9,9 +9,10 @@ import {
     SidebarPanel,
     SidebarContent,
     PageSection,
-    Stack, StackItem, PageSidebar, PageSidebarBody, Page
+    Stack, StackItem, PageSidebar, PageSidebarBody, Page, Masthead, MastheadMain, MastheadBrand, MastheadContent
 } from '@patternfly/react-core';
 import { PayloadHistory, PayloadWithId } from './Payloads';
+import logo from "../assets/logo.png";
 
 const ModelPage = () => {
     const [payloads, setPayloads] = useState<PayloadWithId[]>([]);
@@ -44,6 +45,18 @@ const ModelPage = () => {
         fetchPayloads();
     }, [modelId]);
 
+    const header = (
+        <Masthead>
+            <MastheadMain>
+                <MastheadBrand><img src={logo} alt="Logo" style={{ height: '50px' }}/></MastheadBrand>
+            </MastheadMain>
+            <MastheadContent>
+                <span><code>{modelName}</code> payloads</span>
+            </MastheadContent>
+        </Masthead>
+    );
+
+
     const sidebar = (
         <PageSidebar>
             <PageSidebarBody>
@@ -53,7 +66,7 @@ const ModelPage = () => {
     );
 
     return (
-        <Page sidebar={sidebar}>
+        <Page sidebar={sidebar} header={header}>
             <PageSection>
                 <Breadcrumb>
                     <BreadcrumbItem>
