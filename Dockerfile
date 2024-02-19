@@ -1,26 +1,32 @@
-# Use the official Golang image to create a build artifact.
-# This is based on Debian and sets the GOPATH to /go.
-FROM golang:1.21.7-bookworm as builder
+# Start from the Go image to build your Go application
+FROM golang:1.21.7-bookworm as gobuilder
 
-# Copy local code to the container image.
 WORKDIR /app
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server .
 
-# Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o server
+# Start from the Node image to build your React application
+FROM node:16-alpine as uibuilder
 
-# Use a Docker multi-stage build to create a lean production image.
-# https://docs.docker.com/develop/develop-images/multistage-build/
+# Copy the UI source files from the previous stage
+WORKDIR /app/ui/modelserving-debugger
+COPY --from=gobuilder /app/ui/modelserving-debugger .
+# Install dependencies and build the React application
+RUN npm install && npm run build
+
+# Final stage: Copy the Go binary and static files into a new Alpine image
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
 
+RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
-# Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/server .
+# Copy the server binary from the Go builder stage
+COPY --from=gobuilder /app/server .
 
-# Document that the service listens on port 8080.
+# Copy the built UI from the UI builder stage
+COPY --from=uibuilder /app/ui/modelserving-debugger/build ./ui/modelserving-debugger/build
+
 EXPOSE 8080
 
-# Run the web service on container startup.
+# Run the server binary
 CMD ["./server"]

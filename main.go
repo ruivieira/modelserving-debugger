@@ -24,13 +24,7 @@ type PayloadHistory struct {
 }
 
 var (
-	// Embed templates directly
-	//go:embed templates/history.html
-	historyPage string
-	//go:embed templates/models.html
-	modelsPage string
-	//go:embed images/logo.png
-	logoImage []byte
+	uiBuildDir = "ui/modelserving-debugger/build"
 
 	history = make(map[string][]PayloadHistory)
 	mutex   sync.Mutex
@@ -51,52 +45,85 @@ type InferencePartialPayload struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
+// Model represents the structure of a model to be sent in the JSON response
+type Model struct {
+	Name string `json:"name"`
+}
+
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		mutex.Lock()
-		defer mutex.Unlock()
-		tmpl, _ := template.New("models").Parse(modelsPage)
-		tmpl.Execute(w, history)
-	})
 
-	http.HandleFunc("/models/", func(w http.ResponseWriter, r *http.Request) {
-		modelId := r.URL.Path[len("/models/"):]
-
-		mutex.Lock()
-		modelPayloads, exists := history[modelId]
-		mutex.Unlock()
-
-		if !exists {
+	// API endpoint to list all models
+	http.HandleFunc("/api/models", func(w http.ResponseWriter, r *http.Request) {
+		// Check if the path is exactly "/api/models", not "/api/models/some-model-id"
+		if r.URL.Path != "/api/models" {
 			http.NotFound(w, r)
 			return
 		}
 
-		tmpl, _ := template.New("history").Parse(historyPage)
-		tmpl.Execute(w, struct {
-			ModelId  string
-			Payloads []PayloadHistory
-		}{ModelId: modelId, Payloads: modelPayloads})
-	})
+		mutex.Lock()
+		defer mutex.Unlock()
 
-	http.HandleFunc("/payload-json/", func(w http.ResponseWriter, r *http.Request) {
-		// This endpoint now needs to handle both request and response data.
-		// The URL is expected to include the kind (request or response) and the ID.
-		// For example: /payload-json/request/12345 or /payload-json/response/12345
+		var models []Model
+		for modelId := range history {
+			models = append(models, Model{Name: modelId})
+		}
 
-		segments := strings.Split(r.URL.Path, "/")
-		if len(segments) < 4 {
-			http.Error(w, "URL must include the kind and ID of the payload", http.StatusBadRequest)
+		jsonData, err := json.Marshal(models)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		kind := segments[2]
-		payloadID := segments[3]
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
+	})
+
+	// Handler to list payloads for a specific model
+	http.HandleFunc("/api/models/", func(w http.ResponseWriter, r *http.Request) {
+		// Extract modelId from the URL path
+		pathSegments := strings.Split(r.URL.Path, "/")
+		if len(pathSegments) < 4 || pathSegments[3] == "" {
+			http.NotFound(w, r)
+			return
+		}
+		modelId := pathSegments[3]
+
+		// Check if the request is for payloads
+		if len(pathSegments) > 4 && pathSegments[4] == "payloads" {
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			modelPayloads, exists := history[modelId]
+			if !exists {
+				http.NotFound(w, r)
+				return
+			}
+
+			// Filter or transform modelPayloads as necessary for your response
+			jsonData, err := json.Marshal(modelPayloads)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(jsonData)
+		} else {
+			// Handle other /api/models/:modelId/* requests or return not found
+			http.NotFound(w, r)
+		}
+	})
+
+	http.HandleFunc("/api/payload-json/", func(w http.ResponseWriter, r *http.Request) {
+		pathSegments := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/payload-json/"), "/")
+		payloadID := pathSegments[0]
+		kind := r.URL.Query().Get("kind") // 'request' or 'response'
 
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		for _, historyItems := range history {
-			for _, item := range historyItems {
+		for _, histories := range history {
+			for _, item := range histories {
 				if item.Payload.ID == payloadID && string(item.Payload.Kind) == kind {
 					w.Header().Set("Content-Type", "application/json")
 					w.Write([]byte(item.ProtobufJSON))
@@ -108,7 +135,8 @@ func main() {
 		http.NotFound(w, r)
 	})
 
-	http.HandleFunc("/ingest", func(w http.ResponseWriter, r *http.Request) {
+	// API: Ingest endpoint for POST requests
+	http.HandleFunc("/api/ingest", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 			return
@@ -160,10 +188,8 @@ func main() {
 		w.Write([]byte("Payload processed successfully"))
 	})
 
-	http.HandleFunc("/images/logo.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/png")
-		w.Write(logoImage)
-	})
+	// Serve static files from the root
+	http.Handle("/", http.FileServer(http.Dir(uiBuildDir)))
 
 	fmt.Println("Server is listening on port 8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

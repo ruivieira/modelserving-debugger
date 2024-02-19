@@ -1,6 +1,6 @@
 # modelserving-debugger
 
-![](images/logo.png)
+![](ui/modelserving-debugger/src/assets/logo.png)
 
 The `modelserving-debugger` is a ModelMesh Payload Monitor. A web application designed for monitoring payloads within the ModelMesh architecture, providing insights into both request and response payloads for all registered models. This application offers a convenient way to visualize and debug payload data. The application is deployed on Kubernetes/OpenShift environments and integrates seamlessly with ModelMesh by pointing the `MM_PAYLOAD_PROCESSOR` to the application's `/ingest` endpoint.
 

@@ -5,17 +5,13 @@ services:
     build:
       context: ./logger
       dockerfile: partial.Dockerfile
-      tags:
-        - "latest"
     ports:
       - "8080:8080"
     environment:
-      SERVICE_ENDPOINT: http://modelserving-debugger:8080/ingest
+      SERVICE_ENDPOINT: http://modelserving-debugger:8080/api/ingest
 
   modelserving-debugger:
     build:
       context: .
-      tags:
-        - "latest"
     ports:
       - "8081:8080"
