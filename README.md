@@ -12,7 +12,20 @@ The `modelserving-debugger` is a ModelMesh Payload Monitor. A web application de
 
 ## Deployment
 
-The application is deployed using a Kubernetes/OpenShift-compatible `deployment.yaml` file. Follow these steps to deploy the ModelMesh Payload Monitor in your environment:
+### Helm
+
+`modelserving-debugger` can be deployed using Helm. 
+The Helm chart is available in the `chart` directory. 
+Follow these steps to deploy it in your environment:
+
+```shell
+helm install modelserving-debugger ./chart --namespace <namespace> --create-namespace
+```
+
+### Manual deployment
+
+The application is deployed using a Kubernetes/OpenShift-compatible `deployment.yaml` file. 
+Follow these steps to deploy the ModelMesh Payload Monitor in your environment:
 
 1. **Prepare the Deployment File**
 
