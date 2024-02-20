@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/ruimvieira/modelserving-debugger
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080
+
+selectorLabels:
+  app: "go-app"
+
+containerPort: 8080
+
+ingress:
+  enabled: false  # Set to true to enable ingress

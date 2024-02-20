@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: {{ include "chart.fullname" . }}
+spec:
+    replicas: {{ .Values.replicaCount }}
+    selector:
+        matchLabels:
+            app: go-app
+    template:
+        metadata:
+            labels:
+                app: go-app
+        spec:
+            containers:
+                - name: {{ .Chart.Name }}
+                  image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+                  ports:
+                      - containerPort: {{ .Values.containerPort }}

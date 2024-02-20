@@ -1,0 +1,10 @@
+apiVersion: v2
+name: modelserving-debugger-chart
+fullname: modelserving-debugger-chart
+description: A Helm chart for Kubernetes to deploy modelserving-debugger application
+
+type: application
+
+version: 0.1.0
+
+appVersion: "0.1.0"
